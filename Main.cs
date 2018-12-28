@@ -14,74 +14,71 @@ using VRage.Game.Components;
 using VRage.Utils;
 using VRageMath;
 
-namespace AlwaysSpawnWithoutHydrogen {
+[MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
+public class Main : MySessionComponentBase {
 
-    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public class Main : MySessionComponentBase {
+    private Logger logger;
 
-        private Logger logger;
+    public override void Init(MyObjectBuilder_SessionComponent sessionComponent) {
 
-        public override void Init(MyObjectBuilder_SessionComponent sessionComponent) {
-            
-            base.Init(sessionComponent);
+        base.Init(sessionComponent);
 
-            logger = Logger.getLogger("AlwaysSpawnWithoutHydrogen");
+        logger = Logger.getLogger("AlwaysSpawnWithoutHydrogen");
 
-            /* Add Listener */
-            MyVisualScriptLogicProvider.PlayerSpawned += PlayerSpawned;
+        /* Add Listener */
+        MyVisualScriptLogicProvider.PlayerSpawned += PlayerSpawned;
 
-            logger.WriteLine("Initialized");
+        logger.WriteLine("Initialized");
+    }
+
+    protected override void UnloadData() {
+        base.UnloadData();
+
+        MyVisualScriptLogicProvider.PlayerSpawned -= PlayerSpawned;
+
+        if (logger != null) {
+            logger.WriteLine("Unloaded");
+            logger.Close();
         }
+    }
 
-        protected override void UnloadData() {
-            base.UnloadData();
+    private void PlayerSpawned(long playerId) {
 
-            MyVisualScriptLogicProvider.PlayerSpawned -= PlayerSpawned;
+        //logger.WriteLine("Request of Player "+ playerId);
 
-            if (logger != null) {
-                logger.WriteLine("Unloaded");
-                logger.Close();
-            }
+        IMyIdentity playerIdentity = Player(playerId);
+
+        //logger.WriteLine("Found Identity " + playerId);
+
+        if (playerIdentity != null) {
+            //logger.WriteLine("Player is " + playerIdentity.DisplayName);
+
+            var playerList = new List<IMyPlayer>();
+            MyAPIGateway.Players.GetPlayers(playerList, p => p != null && p.IdentityId == playerIdentity.IdentityId);
+
+            var player = playerList.FirstOrDefault();
+            if (player != null)
+                MyVisualScriptLogicProvider.SetPlayersHydrogenLevel(playerIdentity.IdentityId, 0);
         }
+    }
 
-        private void PlayerSpawned(long playerId) {
+    private IMyIdentity Player(long entityId) {
 
-            //logger.WriteLine("Request of Player "+ playerId);
+        try {
 
-            IMyIdentity playerIdentity = Player(playerId);
+            List<IMyIdentity> listIdentities = new List<IMyIdentity>();
 
-            //logger.WriteLine("Found Identity " + playerId);
+            MyAPIGateway.Players.GetAllIdentites(listIdentities,
+                p => p != null && p.DisplayName != "" && p.IdentityId == entityId);
 
-            if (playerIdentity != null) {
-                //logger.WriteLine("Player is " + playerIdentity.DisplayName);
+            if (listIdentities.Count == 1)
+                return listIdentities[0];
 
-                var playerList = new List<IMyPlayer>();
-                MyAPIGateway.Players.GetPlayers(playerList, p => p != null && p.IdentityId == playerIdentity.IdentityId);
+            return null;
 
-                var player = playerList.FirstOrDefault();
-                if (player != null) 
-                    MyVisualScriptLogicProvider.SetPlayersHydrogenLevel(playerIdentity.IdentityId, 0);
-            }
-        }
-
-        private IMyIdentity Player(long entityId) {
-            
-            try {
-
-                List<IMyIdentity> listIdentities = new List<IMyIdentity>();
-
-                MyAPIGateway.Players.GetAllIdentites(listIdentities,
-                    p => p != null && p.DisplayName != "" && p.IdentityId == entityId);
-
-                if (listIdentities.Count == 1)
-                    return listIdentities[0];
-
-                return null;
-
-            } catch (Exception e) {
-                logger.WriteLine("Error on getting Player Identity " + e);
-                return null;
-            }
+        } catch (Exception e) {
+            logger.WriteLine("Error on getting Player Identity " + e);
+            return null;
         }
     }
 }
