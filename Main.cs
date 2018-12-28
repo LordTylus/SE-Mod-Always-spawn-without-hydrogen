@@ -14,74 +14,71 @@ using VRage.Game.Components;
 using VRage.Utils;
 using VRageMath;
 
-namespace AlwaysToolRemover
-{
-    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public class Main : MySessionComponentBase
-    {
-        private Logging logger;
+namespace AlwaysSpawnWithoutHydrogen {
 
-        public override void Init(MyObjectBuilder_SessionComponent sessionComponent)
-        {
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
+    public class Main : MySessionComponentBase {
+
+        private Logger logger;
+
+        public override void Init(MyObjectBuilder_SessionComponent sessionComponent) {
+            
             base.Init(sessionComponent);
 
-            logger = Logging.Instance;
-            
-            logger.WriteLine("Initialized");
+            logger = Logger.getLogger("AlwaysSpawnWithoutHydrogen");
 
             /* Add Listener */
             MyVisualScriptLogicProvider.PlayerSpawned += PlayerSpawned;
+
+            logger.WriteLine("Initialized");
         }
 
-        protected override void UnloadData()
-        {
+        protected override void UnloadData() {
             base.UnloadData();
 
-            logger.WriteLine("Unloaded");
-
             MyVisualScriptLogicProvider.PlayerSpawned -= PlayerSpawned;
-            logger.Close();
+
+            if (logger != null) {
+                logger.WriteLine("Unloaded");
+                logger.Close();
+            }
         }
 
-        private void PlayerSpawned(long playerId)
-        {
+        private void PlayerSpawned(long playerId) {
+
             //logger.WriteLine("Request of Player "+ playerId);
 
             IMyIdentity playerIdentity = Player(playerId);
 
             //logger.WriteLine("Found Identity " + playerId);
 
-            if (playerIdentity != null)
-            {
+            if (playerIdentity != null) {
                 //logger.WriteLine("Player is " + playerIdentity.DisplayName);
 
                 var playerList = new List<IMyPlayer>();
                 MyAPIGateway.Players.GetPlayers(playerList, p => p != null && p.IdentityId == playerIdentity.IdentityId);
 
                 var player = playerList.FirstOrDefault();
-                if (player != null)
-                {
+                if (player != null) 
                     MyVisualScriptLogicProvider.SetPlayersHydrogenLevel(playerIdentity.IdentityId, 0);
-                }
             }
         }
 
-        private IMyIdentity Player(long entityId)
-        {
-            try
-            {
+        private IMyIdentity Player(long entityId) {
+            
+            try {
+
                 List<IMyIdentity> listIdentities = new List<IMyIdentity>();
 
-                MyAPIGateway.Players.GetAllIdentites(listIdentities, 
+                MyAPIGateway.Players.GetAllIdentites(listIdentities,
                     p => p != null && p.DisplayName != "" && p.IdentityId == entityId);
 
                 if (listIdentities.Count == 1)
                     return listIdentities[0];
-                
+
                 return null;
-            }
-            catch (Exception e)
-            {
+
+            } catch (Exception e) {
                 logger.WriteLine("Error on getting Player Identity " + e);
                 return null;
             }

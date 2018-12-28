@@ -7,8 +7,8 @@
     <ProjectGuid>{E1CFBCED-7F00-4B49-9EF0-1E13097ED5B3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AlwaysSpawnWithoutTools</RootNamespace>
-    <AssemblyName>AlwaysSpawnWithoutTools</AssemblyName>
+    <RootNamespace>AlwaysSpawnWithoutHydrogen</RootNamespace>
+    <AssemblyName>AlwaysSpawnWithoutHydrogen</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

@@ -1,91 +1,80 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using Sandbox.ModAPI;
 
-// This was just pulled from example script, it's a good enough logger
+namespace AlwaysSpawnWithoutHydrogen {
 
-namespace AlwaysToolRemover
-{
-    internal class Logging
-    {
-        private static Logging _instance;
-        private readonly StringBuilder _cache = new StringBuilder( );
-        private int _indent;
+    internal class Logger {
 
-        private readonly TextWriter _writer;
+        private static Dictionary<String, Logger> INSTANCE_MAP = new Dictionary<string, Logger>();
 
-        public Logging( string logFile )
-        {
-            try
-            {
-                _writer = MyAPIGateway.Utilities.WriteFileInLocalStorage( logFile, typeof( Logging ) );
-                _instance = this;
-            }
-            catch
-            {
+        private readonly StringBuilder cache = new StringBuilder();
+        private readonly TextWriter textWriter;
+
+        private Logger(string logFile) {
+
+            try {
+
+                textWriter = MyAPIGateway.Utilities.WriteFileInLocalStorage(logFile, typeof(Logger));
+
+            } catch {
             }
         }
 
-        public static Logging Instance
-        {
-            get
-            {
-                if ( MyAPIGateway.Utilities == null )
-                    return null;
+        public static Logger getLogger(String fileName) {
 
-                if ( _instance == null )
-                    _instance = new Logging( "ToolRemover.log" );
+            if (MyAPIGateway.Utilities == null)
+                return null;
 
-                return _instance;
+            Logger logger = null;
+
+            if (INSTANCE_MAP.TryGetValue(fileName, out logger))
+                return logger;
+
+            logger = new Logger(fileName + ".log");
+
+            INSTANCE_MAP.Add(fileName, logger);
+
+            return logger;
+        }
+
+        public void WriteLine(string text) {
+
+            try {
+
+                if (cache.Length > 0)
+                    textWriter.WriteLine(cache);
+
+                cache.Clear();
+                cache.Append(DateTime.Now.ToString("[HH:mm:ss] "));
+
+                textWriter.WriteLine(cache.Append(text));
+                textWriter.Flush();
+
+                cache.Clear();
+
+            } catch {
             }
         }
 
-        public void IncreaseIndent( )
-        {
-            _indent++;
+        public void Write(string text) {
+            cache.Append(text);
         }
 
-        public void DecreaseIndent( )
-        {
-            if ( _indent > 0 )
-                _indent--;
-        }
+        internal void Close() {
 
-        public void WriteLine( string text )
-        {
-            try
-            {
-                if ( _cache.Length > 0 )
-                    _writer.WriteLine( _cache );
+            try {
 
-                _cache.Clear( );
-                _cache.Append( DateTime.Now.ToString( "[HH:mm:ss] " ) );
-                for ( var i = 0; i < _indent; i++ )
-                    _cache.Append( "\t" );
+                if (cache.Length > 0)
+                    textWriter.WriteLine(cache);
 
-                _writer.WriteLine( _cache.Append( text ) );
-                _writer.Flush( );
-                _cache.Clear( );
+                textWriter.Flush();
+                textWriter.Close();
+
+            } catch {
             }
-            catch
-            {
-            }
-        }
-
-        public void Write( string text )
-        {
-            _cache.Append( text );
-        }
-
-
-        internal void Close( )
-        {
-            if ( _cache.Length > 0 )
-                _writer.WriteLine( _cache );
-
-            _writer.Flush( );
-            _writer.Close( );
         }
     }
 }
